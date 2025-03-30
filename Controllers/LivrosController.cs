@@ -8,25 +8,25 @@ namespace Livraria.Controllers
     [Route("api/livros")]
     public class LivrosController : ControllerBase
     {
-        [HttpGet]
+        [HttpGet("MostrarTodosOsLivros")]
         public IActionResult MostrarTodosOsLivros(Livros livoros)
         {
             return Ok(livoros);
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("BuscaLivro/{id:int}")]
         public IActionResult BuscaLivro(int id)
         {
             return Ok();
         }
 
-        [HttpPost]
+        [HttpPost("AdicionarLivro")]
         public IActionResult AdicionarLivro(Livros livro)
         {
             return CreatedAtAction("Get", new { id = livro.Id}, livro);
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPut("AtualizarLivro/{id:int}")]
         public IActionResult AtualizarLivro(int id, Livros livro)
         {
             if (id != livro.Id)
@@ -37,7 +37,7 @@ namespace Livraria.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("DeletarLivro/{id:int}")]
         public IActionResult DeletarLivro(int id)
         {
             return NoContent();
