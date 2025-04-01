@@ -1,5 +1,7 @@
-﻿using Livraria.Models;
+﻿using Livraria.Data;
+using Livraria.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace Livraria.Controllers
@@ -8,77 +10,68 @@ namespace Livraria.Controllers
     [Route("api/livros")]
     public class LivrosController : ControllerBase
     {
-        [HttpGet("MostrarTodosOsLivros")]
-        [ProducesResponseType(typeof(Livros), StatusCodes.Status200OK)]
-        public IActionResult MostrarTodosOsLivros()
+        private readonly ApiDbContext _context;
+
+        public LivrosController(ApiDbContext context)
         {
-            var livros = new List<Livros>
-            {
-                new Livros
-                {
-                    Id = 1,
-                    Titulo = "Harry Potter e a Pedra Filosofal",
-                    Autor = "J. K. Rowling",
-                    AnoPublicacao = new DateOnly(1997, 6, 26),
-                    Genero = new List<string> { "Romance", "Literatura fantástica", "Literatura infantil", "Alta fantasia" },
-                    Preco = 45.38M
-                },
-                new Livros
-                {
-                    Id = 2,
-                    Titulo = "Harry Potter e a Câmara Secreta",
-                    Autor = "J. K. Rowling",
-                    AnoPublicacao = new DateOnly(1998, 7, 2),
-                    Genero = new List<string> { "Romance", "Literatura fantástica", "Bildungsroman", "Alta fantasia", " Ficção de aventura" },
-                    Preco = 55.17M
-                },
-                new Livros
-                {
-                    Id = 3,
-                    Titulo = "Harry Potter e o Prisioneiro de Azkaban",
-                    Autor = "J. K. Rowling",
-                    AnoPublicacao = new DateOnly(1999, 7, 8),
-                    Genero = new List<string> { "Romance", "Literatura fantástica" },
-                    Preco = 38.94M
-                },
-            };
-            return Ok(livros);
+            _context = context;
         }
 
-        [HttpGet("BuscaLivro/{id:int}")]
-        [ProducesResponseType(typeof(Livros), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult BuscaLivro(int id)
+        [HttpGet("MostrarTodosOsLivros")]
+        [ProducesResponseType(typeof(Livro), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<Livro>>> MostrarTodosOsLivros()
         {
-            return Ok(new Livros());
+            if (_context.Livros == null)
+            {
+                return NotFound();
+            }
+            return await _context.Livros.ToListAsync();
+
+        }
+
+
+        [HttpGet("BuscaLivro/{id:int}")]
+        [ProducesResponseType(typeof(Livro), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Livro>> BuscaLivro(int id)
+        {
+            var livro = await _context.Livros.FindAsync(id);
+
+            return livro;
         }
 
         [HttpPost("AdicionarLivro")]
-        [ProducesResponseType(typeof(Livros), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(Livro), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult AdicionarLivro(Livros livro)
+        public async Task<ActionResult<Livro>> AdicionarLivro(Livro livro)
         {
-            return CreatedAtAction("BuscaLivro", new { id = livro.Id }, livro);
+            _context.Livros.Add(livro);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(BuscaLivro), new { id = livro.Id }, livro);
         }
 
         [HttpPut("AtualizarLivro/{id:int}")]
-        [ProducesResponseType(typeof(Livros), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(Livro), StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult AtualizarLivro(int id, Livros livro)
+        public async Task <IActionResult> AtualizarLivro(int id, Livro livro)
         {
-            if (id != livro.Id)
-            {
-                return BadRequest();
-            }
+            _context.Livros.Update(livro);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
         [HttpDelete("DeletarLivro/{id:int}")]
-        [ProducesResponseType(typeof(Livros), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(Livro), StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult DeletarLivro(int id)
+        public async Task<IActionResult> DeletarLivro(int id)
         {
+            var livro = await _context.Livros.FindAsync();
+
+            _context.Livros.Remove(livro);
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
     }
